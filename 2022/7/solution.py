@@ -1,63 +1,31 @@
 from pathlib import Path
-from dataclasses import dataclass
-from typing import Optional
-from functools import cached_property
+from itertools import accumulate
 
 with open(Path(__file__).parent / "input.txt", encoding="utf-8") as f:
     lines = f.read().strip().split('\n')
 
-all_folders = dict()
+dirs = {"/": 0}
 
-@dataclass
-class Folder:
-    path: str
-    parent: Optional["Folder"]
-    size: int
-    sub_folder_names: list[str]
-
-    @cached_property
-    def full_size(self):
-        return sum([all_folders[f].full_size for f in self.sub_folder_names], 0) + self.size
-
-    def __repr__(self) -> str:
-        return f"Folder({self.path} ({self.size}) [{[f.split('/')[-1] for f in self.sub_folder_names]}])"
-
-assert lines[0] == "$ cd /"
-
-current_path = ""
-current_folder = None
-
-line_no = 0
-while line_no < len(lines):
-    line = lines[line_no]
-    line_no += 1
-    if line == "$ cd ..":
-        current_size = 0
-        current_folder = current_folder.parent
-        current_path = current_folder.path
-        # print(f"{current_path=}")
-    elif line.startswith("$ cd "):
-        name = line[5:]
-        current_path += f"/{name}" if name != "/" else ""
-        current_size = 0
-        current_folder = Folder(current_path, current_folder, 0, [])
-        all_folders[current_path]=current_folder
-    elif line.startswith("$ ls"):
-        while line_no < len(lines) and not lines[line_no].startswith("$"):
-            line = lines[line_no]
-            line_no += 1
-            if line.startswith("dir "):
-                child_name = line[4:]
-                current_folder.sub_folder_names.append(f"{current_path}/{child_name}")
-            else: 
-                size, _name = line.split(" ")
-                current_folder.size += int(size)
-
-all_sizes = {k: v.full_size for k,v in all_folders.items()}
+for line in lines:
+    match line.split():
+        case '$', 'cd', '/':
+            curr = ['/']
+        case '$', 'cd', '..':
+            curr.pop()
+        case '$', 'cd', x:
+            curr.append(x+'/')
+            dirs[''.join(curr)] = 0
+        case '$', 'ls':
+            pass
+        case 'dir', _:
+            pass
+        case size, _:
+            for p in accumulate(curr):
+                dirs[p] += int(size)
 
 max_size = 100000
-print(sum(v for k,v in all_sizes.items() if v<max_size))
+print(sum(v for v in dirs.values() if v<max_size))
 
-total_size = all_sizes[""]
+total_size = dirs["/"]
 to_remove = total_size - 40000000
-print(min(v for k,v in all_sizes.items() if v>to_remove))
+print(min(v for v in dirs.values() if v>to_remove))
