@@ -1,5 +1,8 @@
-with open("1/input.txt") as f:
-    lines = f.read().strip().split('\n')
+from aocd.models import Puzzle
+
+puzzle = Puzzle(2023,1)
+data = puzzle.input_data
+lines = data.strip().split('\n')
 
 def get_number_1(_line,_ix,char):
     return int(char)

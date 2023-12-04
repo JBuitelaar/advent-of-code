@@ -1,8 +1,10 @@
 import re
 from collections import defaultdict
+from aocd.models import Puzzle
 
-with open("3/input.txt", encoding="utf-8") as f:
-    lines = f.read().strip().split('\n')
+puzzle = Puzzle(2023,3)
+data = puzzle.input_data
+lines = data.strip().split('\n')
 
 line_length = len(lines[0])
 
