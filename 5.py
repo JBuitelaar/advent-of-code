@@ -18,8 +18,6 @@ for group in groups[1:]:
     all_maps.append(mapping)
 
 seed_ranges = [[start,start+range] for start,range in batched(seeds,2)]
-# print(seed_ranges)
-# print(all_maps)
 
 def map_value(mapping,input):
     for src0,src1,offset in mapping:
@@ -31,30 +29,30 @@ for mapping in all_maps:
     seeds = [map_value(mapping,seed) for seed in seeds]
 
 ans1 = min(seeds)
-print(ans1)
+print(f"{ans1=}")
 
-
-def map_ranges(mapping,input_ranges,output_ranges):
+def map_ranges(mapping,input_ranges):
     if not input_ranges:
-        return output_ranges
-    input0,input1 = input_ranges.pop()
+        return []
+    input_range = input_ranges.pop()
+    input0,input1 = input_range
     for src0,src1,offset in mapping:
         if input0<src1 and input1>src0:
             overlap_start = max(input0,src0)
             overlap_end = min(input1,src1)
-            output_ranges.append( [overlap_start+offset,overlap_end+offset])
+            output_range = [overlap_start+offset,overlap_end+offset]
+            # we still need to investigate the part that doesn't overlap:
             if input0<src0:
                 input_ranges.append([input0,src0])
             if input1>src1:
                 input_ranges.append([src1,input1])
-            return map_ranges(mapping,input_ranges,output_ranges)
+            return map_ranges(mapping,input_ranges) + [output_range]
 
-    output_ranges.append([input0,input1])
-    return map_ranges(mapping,input_ranges,output_ranges)
+    return map_ranges(mapping,input_ranges) + [input_range]
 
 for mapping in all_maps:
-    seed_ranges = map_ranges(mapping,seed_ranges,[])
+    seed_ranges = map_ranges(mapping,seed_ranges)
 
 ans2=min(x for [x,y] in seed_ranges)
 
-print(ans2)
+print(f"{ans2=}")
