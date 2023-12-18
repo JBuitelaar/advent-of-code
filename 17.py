@@ -7,6 +7,8 @@ puzzle = Puzzle(2023,17)
 data = puzzle.input_data
 # data = puzzle.examples[0].input_data
 
+N,S,W,E = -1,1,-1j,1j
+
 lines = data.strip().split('\n')
 R = len(lines)
 C = len(lines[0])
@@ -21,17 +23,17 @@ def print_path(path):
         print("".join("█" if r+1j*c in path else val for c,val in enumerate(row)))
 
 
-def solve(min_steps,max_steps): #loc,prev_dir,dir_steps,heat_lost):
+def solve(min_steps,max_steps): 
     to_do = [] # priority queue of nodes to evaluate (starting with the lowest value)
-    seen = {}
+    seen = {}  # each element is a tuple of location and vertical (== a boolean indicating whether we just moved vertically or not)
     path = []  # for debugging and printing, keep track of the path
     # start off with the two directions
-    heappush(to_do,(0,0,start_loc,1,[start_loc]))
-    heappush(to_do,(0,1,start_loc,1j,[start_loc]))
+    heappush(to_do,(0,0,start_loc,True,[start_loc]))
+    heappush(to_do,(0,1,start_loc,False,[start_loc]))
     counter=1  # need some way to sort the heap if the values are equal
 
     while to_do:
-        (heat_lost,_,loc,prev_dir,path) = heappop(to_do)
+        (heat_lost,_,loc,prev_vertical,path) = heappop(to_do)
 
         if loc == end_loc:
             # DONE!
@@ -39,8 +41,9 @@ def solve(min_steps,max_steps): #loc,prev_dir,dir_steps,heat_lost):
             print(f"cache_size={len(seen)}")
             return heat_lost
 
+        directions = (E,W) if prev_vertical else (N,S)
+
         # turn 90 degrees in both directions
-        directions = [d*prev_dir*1j for d in [1,-1]]
         for dir in directions:
             new_loc=loc
             new_cost = heat_lost
@@ -54,12 +57,13 @@ def solve(min_steps,max_steps): #loc,prev_dir,dir_steps,heat_lost):
                 new_path.append(new_loc)
                 if step < min_steps:  # can't turn before making min_steps
                     continue
-                key = (new_loc,dir)
+                vertical = not prev_vertical
+                key = (new_loc,vertical)
                 if key in seen and seen[key]<=new_cost:
                     continue
                 seen[key] = new_cost
                 counter+=1
-                heappush(to_do,(new_cost,counter,new_loc,dir,new_path))
+                heappush(to_do,(new_cost,counter,new_loc,vertical,new_path))
 
 
 inputs = [(1,3),(4,10)]
