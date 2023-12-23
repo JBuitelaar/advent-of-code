@@ -137,11 +137,9 @@ ans2=longest
 timer = time.time() - start_time
 print(f"{ans2=}, {timer=:.2f}s")
 
-
 plt.figure(figsize=(15,8))
 # I couldn't get the fixed nodes to work
-# fixed_nodes = {start_loc: (-R,-R), end_loc: (R,R)}
-pos = nx.spring_layout(G,weight="weight")  # ,pos=fixed_nodes,fixed=fixed_nodes.keys())
+pos = {n: (n.imag,-n.real) for n in G.nodes}
 nx.draw(G, pos,with_labels=False)
 nx.draw_networkx_edge_labels(G, pos,edge_labels=edge_labels)
 plt.show()
