@@ -1,8 +1,9 @@
 # Apparently there is the shoelaces formula for this, but I calculated it myself
-# Basically the same as this: https://www.reddit.com/r/adventofcode/comments/18l0qtr/comment/kdvcsza/
+# I basically did the same as this: https://www.reddit.com/r/adventofcode/comments/18l0qtr/comment/kdvcsza/
 
+import time
 import itertools
-from collections import defaultdict, Counter
+from collections import defaultdict
 from aocd.models import Puzzle
 
 puzzle = Puzzle(2023,18)
@@ -104,9 +105,11 @@ def solve(part1):
 
 ans1=solve(True)
 print(f"{ans1=}")
+start_time = time.time()
 
 ans2=solve(False)
-print(f"{ans2=}")
+timer = time.time()-start_time
+print(f"{ans2=}, {timer=}s")
 
 
 

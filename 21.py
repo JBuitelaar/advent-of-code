@@ -1,3 +1,8 @@
+# For part 2 I basically did the same as here:
+# https://www.reddit.com/r/adventofcode/comments/18nevo3/comment/kealztx/
+# also here: https://www.reddit.com/r/adventofcode/comments/18o4y0m/2023_day_21_part_2_algebraic_solution_using_only/
+# apparently you can also just fit a quadratic function to the data and get the answer
+
 import time
 from collections import defaultdict, Counter
 from aocd.models import Puzzle
