@@ -25,53 +25,25 @@ instruction_sizes = {  # instruction sizes and #variables
     8: (4,2),
     99: (1,0)
 }
-from dataclasses import dataclass
-
-@dataclass
 class IntCode:
-    program: tuple[int,...]
-    memory: list[int] = None
-    pointer: int = 0
+    """IntCode VM"""
 
-
-    # def run_all(self,inputs=None,log=False):
-    #     # run the program and collect all outputs
-
-    def get_output_iter(self,inputs=None):
-        self.memory = list(self.program).copy()
+    def __init__(self,program):
+        self.memory = list(program).copy()
         self.pointer = 0
-        return self.outputiter(inputs)
-        
-    def run_until_halted(self,inputs=None):
-        # and return the value at memory location 0
-        output_iter=self.get_output_iter(inputs)
-        for output in output_iter:
-            print(f"{output=}")
-        return self.memory[0]
 
     def run_test(self,input_val):
-        output_iter=self.get_output_iter(input_val)
-        # returns several 0s and a last exit code:
-        for v in output_iter:
-            if v:
-                return v
-
-    def continue_run(self,inputs=None):
-        # continue where we left off, but with new input:
-        # self.pointer=0
-        return next(self.outputiter(inputs))
+        """test returns 0 outputs until a final exit code"""
+        while True:
+            output = self.run(input_val)
+            if output:
+                assert self.memory[self.pointer]==99
+                return output
 
 
-    def run(self,inputs=None,log=False):
-        self.memory = list(self.program).copy()
-        self.pointer = 0
-        self.outputiter(inputs,log)
-
-
-    def outputiter(self,inputs=None,log=False):
-        # continue the run where we left off
+    def run(self,inputs=None):
+        # run the program. Stops at and retuns the next output, or raises a GeneratorExit
         memory = self.memory
-        pointer = self.pointer
 
         if inputs is not None:
             if isinstance(inputs,int):
@@ -79,14 +51,13 @@ class IntCode:
             input_pointer = 0
 
         while True:
-            # print(program)
-            inp=memory[pointer]
+            inp=memory[self.pointer]
             opcode = inp%100
             if opcode == 99:
-                return
+                raise GeneratorExit
 
             instr_size,var_size = instruction_sizes[opcode]
-            parameters = memory[pointer+1:pointer+instr_size]
+            parameters = memory[self.pointer+1:self.pointer+instr_size]
 
             # 0: position mode
             # 1: immediate mode
@@ -96,15 +67,11 @@ class IntCode:
             if var_size:
                 vars = [ix if pmode==1 else memory[ix] for pmode,ix in zip(parameter_modes,parameters[:var_size])]
 
-            pointer += instr_size
-
+            self.pointer += instr_size
 
             if opcode==4:
                 output = vars[0]
-                # self.memory = memory  # not needed because its a pointer anyway?
-                self.pointer = pointer
-                yield output
-                continue
+                return output
             
             if instr_size-var_size==2:
                 assert parameter_modes[-1]==0
@@ -113,14 +80,10 @@ class IntCode:
             if opcode == 1:
                 v1,v2 = vars
                 res  = v1+v2
-                if log:
-                    print(f"p={pointer:3} ({opcode}): v[{res_addr:3}] = v[{parameters[0]:3}]+v[{parameters[1]:3}] = {v1}+{v2}={res}")
                 memory[res_addr] = res
             elif opcode == 2:
                 v1,v2 = vars
                 res  = v1*v2
-                if log:
-                    print(f"p={pointer:3} ({opcode}): v[{res_addr:3}] = v[{parameters[0]:3}]*v[{parameters[1]:3}] = {v1}+{v2}={res}")
 
                 memory[res_addr] = res
             elif opcode==3:
@@ -130,7 +93,7 @@ class IntCode:
             elif opcode in (5,6):
                 v1,v2=vars
                 if bool(v1)== (opcode==5):
-                    pointer=v2
+                    self.pointer=v2
             elif opcode==7:
                 v1,v2=vars
                 memory[res_addr] = int(v1<v2)
@@ -142,15 +105,19 @@ class IntCode:
 
 
 print("2019.2")
-def run(program,input=None,log=False):
-    return IntCode(program).run_until_halted(input)
+def run2(program,inputs=None):
+    vm = IntCode(program)
+    try:
+        vm.run(inputs)
+    except GeneratorExit:
+        return vm.memory[0]
 
 program2 = read_program(2)
 
 def solve(noun,verb):
     program2[1] = noun
     program2[2] = verb
-    return run(program2)
+    return run2(program2)
 
 ans1=solve(12,2)
 
@@ -180,12 +147,12 @@ inp = """3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,
 999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99"""
 
 program = read_data(inp)
-assert next(IntCode(program).get_output_iter(8)) == 1000
-assert next(IntCode(program).get_output_iter(7)) == 999
-assert next(IntCode(program).get_output_iter(9)) == 1001
+assert IntCode(program).run(8) == 1000
+assert IntCode(program).run(7) == 999
+assert IntCode(program).run(99) == 1001
 
 # 5.2
-ans2 = next(IntCode(program5).get_output_iter(5))
+ans2 = IntCode(program5).run(5)
 print(f"{ans2=}")
 assert ans2 == 584126, ans2
 
@@ -196,46 +163,43 @@ program = read_data("3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,
 seq= [1,0,4,3,2]
 input = 0
 for phase in seq:
-    input = next(IntCode(program).get_output_iter([phase,input]))
+    input = IntCode(program).run([phase,input])
 assert input == 65210,input
 
 # # 7.1:
 program7 = read_program(7)
 
-ans2 = 0
+ans1 = 0
 for seq in itertools.permutations(range(5)):
     input = 0
     for phase in seq:
-        input = next(IntCode(program7).get_output_iter([phase,input]))
-    if input>ans2:
-        ans2 = input
+        input = IntCode(program7).run([phase,input])
+    if input>ans1:
+        ans1 = input
 
-print(f"{ans2=}")
-assert 22012==ans2
+print(f"{ans1=}")
+assert 22012==ans1
 
 
 # 7.2 ex 1
 
 def run72(program,seq):
-    programs = []
-    input = 0
+    vms = []
+    val = 0
     for phase in seq:
         p = IntCode(program)
-        programs.append(p)
-        input = next(p.get_output_iter([phase,input]))
-        # print(input)
+        vms.append(p)
+        val = p.run([phase,val])
 
-    def run_until_done(programs,input):
+    def run_until_done(vms,input):
         while True:
-            for ix,p in enumerate(programs):
+            for vm in vms:
                 try:
-                    input = p.continue_run(input)
-                    # print(input)
-                except StopIteration:
-                    # assert ix==len(programs)-1, ix #"should stop at the last amplifyer"
+                    input = vm.run(input)
+                except GeneratorExit:
                     return input
 
-    return run_until_done(programs,input)
+    return run_until_done(vms,val)
 
 program = read_data("3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5")
 seq = [9,8,7,6,5]
