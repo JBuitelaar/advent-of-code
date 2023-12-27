@@ -1,0 +1,14 @@
+# to ignore a file that is already tracked
+# git update-index --assume-unchanged myfile.py
+# and to undo:
+# git update-index --no-assume-unchanged myfile.py
+# to list all files that are assume-unchanged (Powershell):
+# git ls-files -v | Select-String -CaseSensitive '^h'
+
+# template.py
+# .gitignore
+.pylintrc
+/test*.py
+/tmp/*
+/.vscode/
+__pycache__/
