@@ -11,10 +11,10 @@ inp = """3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,
 999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99"""
 
 program = read_program_string(inp)
-assert IntCode(program).run(8) == 1000
-assert IntCode(program).run(7) == 999
-assert IntCode(program).run(99) == 1001
+assert IntCode(program).run_simple(8) == 1000
+assert IntCode(program).run_simple(7) == 999
+assert IntCode(program).run_simple(99) == 1001
 
 # 5.2
-ans2 = IntCode(program5).run(5)
+ans2 = IntCode(program5).run_simple(5)
 print(f"{ans2=}")

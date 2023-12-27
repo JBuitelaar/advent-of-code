@@ -3,7 +3,7 @@ from intcode import IntCode, read_program_for_puzzle
 def run2(program,inputs=None):
     vm = IntCode(program)
     try:
-        vm.run(inputs)
+        vm.next_output(inputs)
     except GeneratorExit:
         return vm.memory[0]
 

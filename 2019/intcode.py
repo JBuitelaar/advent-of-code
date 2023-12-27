@@ -6,6 +6,7 @@ def read_program_string(values_str):
     return [int(v) for v in values_str.strip().split(',')]
 
 def read_program_for_puzzle(puzzle_no):
+    """read the program from the input"""
     puzzle = Puzzle(2019,puzzle_no)
     data = puzzle.input_data
     # data = "1,9,10,3,2,3,11,0,99,30,40,50"
@@ -31,14 +32,6 @@ class IntCode:
         self.pointer = 0
         self.relative_base = 0
 
-    def run_test(self,input_val):
-        """test returns 0 outputs until a final exit code"""
-        while True:
-            output = self.run(input_val)
-            if output:
-                assert self.memory[self.pointer]==99
-                return output
-
     def _write(self,addr,val):
         if addr>=len(self.memory):
             self.memory.extend([0]*(addr-len(self.memory)+1))
@@ -63,17 +56,31 @@ class IntCode:
         else:
             return self._read(self._get_loc(val,mode))
 
+    def run_test(self,input_val):
+        """test returns 0 outputs until a final exit code"""
+        while True:
+            output = self.next_output(input_val)
+            if output:
+                assert self.memory[self.pointer]==99
+                return output
+
     def run_all(self,inputs=None):
         """run the program until it halts"""
         outputs = []
         while True:
             try:
-                output = self.run(inputs)
+                output = self.next_output(inputs)
                 outputs.append(output)
             except GeneratorExit:
                 return outputs
 
-    def run(self,inputs=None):
+    def run_simple(self,inputs=None):
+        """often a program only has one output"""
+        outputs = self.run_all(inputs)
+        assert len(outputs)==1
+        return outputs[0]
+
+    def next_output(self,inputs=None):
         # run the program. Stops at and retuns the next output, or raises a GeneratorExit
         if inputs is not None:
             if isinstance(inputs,int):

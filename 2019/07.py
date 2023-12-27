@@ -7,7 +7,7 @@ program = read_program_string("3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,3
 seq= [1,0,4,3,2]
 val = 0
 for phase in seq:
-    val = IntCode(program).run([phase,val])
+    val = IntCode(program).run_simple([phase,val])
 assert val == 65210,val
 
 # # 7.1:
@@ -17,7 +17,7 @@ ans1 = 0
 for seq in itertools.permutations(range(5)):
     val = 0
     for phase in seq:
-        val = IntCode(program7).run([phase,val])
+        val = IntCode(program7).run_simple([phase,val])
     if val>ans1:
         ans1 = val
 
@@ -33,13 +33,13 @@ def run72(program,seq):
     for phase in seq:
         p = IntCode(program)
         vms.append(p)
-        val = p.run([phase,val])
+        val = p.next_output([phase,val])
 
     def run_until_done(vms,val):
         while True:
             for vm in vms:
                 try:
-                    val = vm.run(val)
+                    val = vm.next_output(val)
                 except GeneratorExit:
                     return val
 
