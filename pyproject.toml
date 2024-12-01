@@ -11,3 +11,6 @@ dependencies = [
     "scipy>=1.14.1",
     "sympy>=1.13.3",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"template.py" = ["F401"]

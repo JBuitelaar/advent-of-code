@@ -12,3 +12,5 @@
 /tmp/*
 /.vscode/
 __pycache__/
+
+uv.lock
