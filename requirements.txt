@@ -1,7 +1,0 @@
-# https://github.com/wimglenn/advent-of-code-data
-advent-of-code-data
-
-networkx
-scipy
-# docunentation says it only supports <=3.10 and recommends conda, but it works fine with pip/3.12
-sympy
