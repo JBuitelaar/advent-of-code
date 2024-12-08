@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-puzzle = Puzzle(2024, 8)
+puzzle = Puzzle(2024, 9)
 
 # Throw this away before committing:
 import webbrowser
