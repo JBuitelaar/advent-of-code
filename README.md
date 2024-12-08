@@ -1,8 +1,14 @@
-AOC solutions
+[Advent of code](https://adventofcode.com/)
+
 
 Uses [advent-of-code-data](https://github.com/wimglenn/advent-of-code-data) to get the inputs and submit results.
-Make sure to set the browser to the one you use to login with:
-```json
-    "workbench.externalBrowser": "chrome"
+
+It needs to know your session ID. I'm using [python-dotenv] to read them from `\.env`, which looks like this:
+```sh
+AOC_SESSION=your_session_id
 ```
-I've stored my session id in `Path.home() / ".config/aocd/token"`, as explained [here](https://github.com/wimglenn/advent-of-code-wim/issues/1). You need to update that occasionally.
+Altenatively, just permanently set the env variable or store the session id in `Path.home() / ".config/aocd/token"`.
+See [here](https://github.com/wimglenn/advent-of-code-wim/issues/1) how to get the token.
+
+
+Run `python utils/create_file.py` to create a file for the next exercise
