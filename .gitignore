@@ -15,3 +15,7 @@ __pycache__/
 
 uv.lock
 /.env
+
+# from https://github.com/LiquidFun/aoc_tiles
+.aoc_tiles/*
+!.aoc_tiles/tiles/
