@@ -25,7 +25,7 @@ assert not os.path.exists(fn), f"{fn} already exists"
 with open("template.py", "r") as f:
     content = f.read()
 
-content = re.sub(r"Puzzle\(\d{4},\d{1,2}\)", f"Puzzle({year},{day})", content, 1)
+content = re.sub(r"Puzzle\(\d{4}, \d{1,2}\)", f"Puzzle({year},{day})", content, 1)
 
 filename = f"{year}/{day:02d}.py"
 
