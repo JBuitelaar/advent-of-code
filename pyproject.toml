@@ -25,4 +25,5 @@ dependencies = [
 exclude=["template.py"]
 
 [tool.ruff]
+exclude=["2018"]
 force-exclude = true
