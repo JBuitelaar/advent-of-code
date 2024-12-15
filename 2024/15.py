@@ -1,4 +1,5 @@
 import time
+from functools import reduce
 from aocd.models import Puzzle
 from dotenv import load_dotenv
 
@@ -6,7 +7,7 @@ load_dotenv()
 
 puzzle = Puzzle(2024, 15)
 
-# # Basic example for part 1:
+# Basic example for part 1:
 # data="""
 # ########
 # #..O.O.#
@@ -16,7 +17,7 @@ puzzle = Puzzle(2024, 15)
 # #...O..#
 # #......#
 # ########
-#
+
 # <^^>>>vv<v>>v<<"""
 
 # # Basic example for part 2:
@@ -28,7 +29,7 @@ puzzle = Puzzle(2024, 15)
 # #..O..#
 # #.....#
 # #######
-#
+
 # <vv<<^^<<^^"""
 
 # data = puzzle.examples[0].input_data
@@ -45,130 +46,128 @@ N, S, W, E = dirs
 dir_map = dict(zip("^v<>", dirs))
 
 
-def print_grid(grid, loc):
-    R = max(int(loc.real) for loc in grid) + 1
-    C = max(int(loc.imag) for loc in grid) + 1
-    for r in range(R):
-        row = ["@" if r + 1j * c == loc else grid[r + 1j * c] for c in range(C)]
-        print("".join(row))
-    print("\n")
+def insert(rows, loc, v):
+    r, c = int(loc.real), int(loc.imag)
+    rows[r][c] = v
 
 
-def read_grid(maze):
-    maze_lines = maze.strip().split("\n")
-    grid = {
-        r + 1j * c: v for r, row in enumerate(maze_lines) for c, v in enumerate(row)
-    }
-    start_loc = next(loc for loc, v in grid.items() if v == "@")
-    grid[start_loc] = "."
-    return grid, start_loc
-
-
-def push_boxes_simple(grid, box_loc, dir):
-    """Try to push the box in box_loc in the direction, including all connected boxes
-    return True if successful
-    Doesn't matter if the box has size 1 (O) or 2 ([]), as long as we're pushing [] from left/right
+class Grid:
+    """A grid with a robot and boxes
+    we keep track of the location of the walls (fixed), robot and boxes (moving)
     """
-    nxt = box_loc + dir
-    if grid[nxt] == "#":
+
+    def __init__(self, maze, box_char="O"):
+        maze_lines = maze.strip().split("\n")
+        self.nrows = len(maze_lines)
+        self.ncols = len(maze_lines[0])
+        walls = set()
+        boxes = set()
+        for r, row in enumerate(maze_lines):
+            for c, v in enumerate(row):
+                loc = r + 1j * c
+                if v == box_char:
+                    boxes.add(loc)
+                elif v == "@":
+                    self.robot = loc
+                elif v == "#":
+                    walls.add(loc)
+        self.walls = walls
+        self.boxes = boxes
+
+    def __str__(self):
+        rows = [["."] * self.ncols for _ in range(self.nrows)]
+        for loc in self.walls:
+            insert(rows, loc, "#")
+        for loc in self.boxes:
+            insert(rows, loc, "O")
+        insert(rows, self.robot, "@")
+        return "\n".join("".join(r) for r in rows)
+
+    def find_box(self, loc):
+        # Return the box location of there is a box at loc, None otherwise
+        if loc in self.boxes:
+            return loc
+        return None
+
+    def box_locs(self, box):
+        # Return all locations occupied by this box
+        return {box}
+
+    def push_boxes(self, boxes, dir):
+        nxt_locs = reduce(set.union, (self.box_locs(loc + dir) for loc in boxes))
+        if any(loc in self.walls for loc in nxt_locs):
+            return False
+        nxt_boxes = [self.find_box(loc) for loc in nxt_locs]
+        nxt_boxes = {b for b in nxt_boxes if b and b not in boxes}
+        if (not nxt_boxes) or self.push_boxes(nxt_boxes, dir):
+            for loc in boxes:
+                self.boxes.remove(loc)
+                self.boxes.add(loc + dir)
+            return True
         return False
-    if grid[nxt] == "." or push_boxes_simple(grid, nxt, dir):
-        # there's an empty space, or there's a box that we can push away
-        grid[nxt] = grid[box_loc]
-        grid[box_loc] = "."
-        return True
-    return False
 
+    def move(self, dir):
+        nxt = self.robot + dir
+        if nxt in self.walls:
+            return
+        box = self.find_box(nxt)
+        if (box is None) or self.push_boxes({box}, dir):
+            self.robot = nxt
 
-def move_robot(start_grid, loc, movements, push_box_func):
-    """execute all robot moves starting from loc"""
-    grid = start_grid.copy()
-    for step in movements:
-        dir = dir_map[step]
-        nxt = loc + dir
-        if grid[nxt] == "#":
-            pass
-        elif grid[nxt] == "." or push_box_func(grid, nxt, dir):
-            loc = nxt
-        # print(f"move {step}:")
-        # print_grid(grid,loc)
+    def execute_moves(self, moves, verbose=False):
+        for move in moves:
+            self.move(dir_map[move])
+            if verbose:
+                print(f"\nmove {move}:\n{self}")
 
-    return grid, loc
-
-
-def sum_coord(grid, box_char):
-    return sum(int(loc.imag + loc.real * 100) for loc in grid if grid[loc] == box_char)
+    def sum_coord(self):
+        return sum(int(loc.imag + loc.real * 100) for loc in self.boxes)
 
 
 ### PART 1 ###
-start_grid, start_loc = read_grid(maze)
-# print("Initial state:")
-# print_grid(start_grid,start_loc)
+grid = Grid(maze)
+# print(f"\nInitial state:\n{grid}")
+grid.execute_moves(moves)
+# print(f"\nFinal state:\n{grid}")
+ans1 = grid.sum_coord()
 
-grid, loc = move_robot(start_grid, start_loc, moves, push_boxes_simple)
-
-ans1 = sum_coord(grid, "O")
 timer = time.time() - start_time
 print(f"{ans1=}, {timer=:.2f}s")
 
-
 ### PART 2 ###
-maze = maze.replace("O", "[]").replace(".", "..").replace("@", "@.").replace("#", "##")
-start_grid, start_loc = read_grid(maze)
-# print("Initial state:")
-# print_grid(start_grid,start_loc)
 
 
-def move_boxes_updown(grid, boxes, dir):
-    for lc in boxes:
-        grid[lc + dir] = grid[lc]
-        grid[lc] = "."
+class Grid2(Grid):
+    """Grid with larger boxes
+    We identify boxes by the left part of the box.
+    """
+
+    def __init__(self, maze):
+        maze2 = (
+            maze.replace(".", "..")
+            .replace("@", "@.")
+            .replace("O", "O.")
+            .replace("#", "##")
+        )
+        super().__init__(maze2)
+
+    def find_box(self, loc):
+        if loc + W in self.boxes:
+            return loc + W
+        return super().find_box(loc)
+
+    def box_locs(self, box):
+        return {box, box + E}
+
+    def __str__(self):
+        return super().__str__().replace("O.", "[]")
 
 
-def push_boxes_updown(grid, boxes, dir):
-    # Try to push the boxes in the direction, including all connected boxes
-    # return True if successful
-    next_space = [b + dir for b in boxes]
-    next_objects = [grid[b] for b in next_space]
-    if all(b == "." for b in next_objects):
-        # all spaces are empty, so we can simply move:
-        move_boxes_updown(grid, boxes, dir)
-        return True
-    if any(b == "#" for b in next_objects):
-        # some wall is blocking the way. We can't move
-        return False
-    # there are boxes in the way. We need to try to push them as well
-    next_boxes = set()
-    for lc in next_space:
-        t = grid[lc]
-        if t in "[]":
-            next_boxes.add(lc)
-            # some duplication here, to deal with the case where only half the box is in next_space
-            next_boxes.add(lc + W if t == "]" else lc + E)
-    if push_boxes_updown(grid, next_boxes, dir):
-        move_boxes_updown(grid, boxes, dir)
-        return True
-    return False
-
-
-def push_boxes_part2(grid, box_loc, dir) -> bool:
-    if dir in [W, E]:
-        return push_boxes_simple(grid, box_loc, dir)
-
-    # step in [N,S].
-    # First add the other box part:
-    box = {box_loc}
-    box.add(box_loc + W if grid[box_loc] == "]" else box_loc + E)
-    return push_boxes_updown(grid, box, dir)
-
-
-grid, loc = move_robot(start_grid, start_loc, moves, push_boxes_part2)
-
-ans2 = sum_coord(grid, "[")
-
+grid = Grid2(maze)
+# print(f"\nInitial state:\n{grid}")
+grid.execute_moves(moves)
+# print(f"\nFinal state:\n{grid}")
+ans2 = grid.sum_coord()
 
 timer = time.time() - start_time
 print(f"{ans2=}, {timer=:.2f}s")
-
-# print("Final grid:")
-# print_grid(grid, loc)
