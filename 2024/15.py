@@ -6,19 +6,7 @@ load_dotenv()
 
 puzzle = Puzzle(2024, 15)
 
-# data = puzzle.examples[0].input_data
-
-# data = """
-# #######
-# #...#.#
-# #.....#
-# #..OO@#
-# #..O..#
-# #.....#
-# #######
-#
-# <vv<<^^<<^^"""
-
+# # Basic example for part 1:
 # data="""
 # ########
 # #..O.O.#
@@ -31,18 +19,30 @@ puzzle = Puzzle(2024, 15)
 #
 # <^^>>>vv<v>>v<<"""
 
+# # Basic example for part 2:
+# data = """
+# #######
+# #...#.#
+# #.....#
+# #..OO@#
+# #..O..#
+# #.....#
+# #######
+#
+# <vv<<^^<<^^"""
+
+# data = puzzle.examples[0].input_data
 # print(f"Example: \n{data}\n{"="*80}")
 
 data = puzzle.input_data
 start_time = time.time()
 
 maze, moves = data.strip().split("\n\n")
-steps = "".join(moves.split())
+moves = moves.replace("\n", "")
 
 dirs = -1, 1, -1j, 1j
 N, S, W, E = dirs
-
-dir_map = {"<": W, ">": E, "^": N, "v": S}
+dir_map = dict(zip("^v<>", dirs))
 
 
 def print_grid(grid, loc):
@@ -51,7 +51,7 @@ def print_grid(grid, loc):
     for r in range(R):
         row = ["@" if r + 1j * c == loc else grid[r + 1j * c] for c in range(C)]
         print("".join(row))
-    print("\n\n")
+    print("\n")
 
 
 def read_grid(maze):
@@ -80,19 +80,17 @@ def push_boxes_simple(grid, box_loc, dir):
     return False
 
 
-def move_robot(grid, loc, steps, move_box_func):
-    """execute all robot steps
-    move_box_func is a function to move a box (element)
-    """
-    for step in steps:
+def move_robot(start_grid, loc, movements, push_box_func):
+    """execute all robot moves starting from loc"""
+    grid = start_grid.copy()
+    for step in movements:
         dir = dir_map[step]
-
         nxt = loc + dir
         if grid[nxt] == "#":
             pass
-        elif grid[nxt] == "." or move_box_func(grid, nxt, dir):
+        elif grid[nxt] == "." or push_box_func(grid, nxt, dir):
             loc = nxt
-        # print(f"{step=}\n")
+        # print(f"move {step}:")
         # print_grid(grid,loc)
 
     return grid, loc
@@ -104,9 +102,10 @@ def sum_coord(grid, box_char):
 
 ### PART 1 ###
 start_grid, start_loc = read_grid(maze)
+# print("Initial state:")
 # print_grid(start_grid,start_loc)
 
-grid, loc = move_robot(start_grid.copy(), start_loc, steps, push_boxes_simple)
+grid, loc = move_robot(start_grid, start_loc, moves, push_boxes_simple)
 
 ans1 = sum_coord(grid, "O")
 timer = time.time() - start_time
@@ -116,13 +115,14 @@ print(f"{ans1=}, {timer=:.2f}s")
 ### PART 2 ###
 maze = maze.replace("O", "[]").replace(".", "..").replace("@", "@.").replace("#", "##")
 start_grid, start_loc = read_grid(maze)
-# print_grid(grid,start_loc)
+# print("Initial state:")
+# print_grid(start_grid,start_loc)
 
 
-def move_boxes_updown(grid, boxes, step):
-    for lc, b in boxes.items():
+def move_boxes_updown(grid, boxes, dir):
+    for lc in boxes:
+        grid[lc + dir] = grid[lc]
         grid[lc] = "."
-        grid[lc + step] = b
 
 
 def push_boxes_updown(grid, boxes, dir):
@@ -138,15 +138,13 @@ def push_boxes_updown(grid, boxes, dir):
         # some wall is blocking the way. We can't move
         return False
     # there are boxes in the way. We need to try to push them as well
-    next_boxes = {}
+    next_boxes = set()
     for lc in next_space:
         t = grid[lc]
-        if t == "[":
-            next_boxes[lc] = "["
-            next_boxes[lc + E] = "]"
-        elif t == "]":
-            next_boxes[lc + W] = "["
-            next_boxes[lc] = "]"
+        if t in "[]":
+            next_boxes.add(lc)
+            # some duplication here, to deal with the case where only half the box is in next_space
+            next_boxes.add(lc + W if t == "]" else lc + E)
     if push_boxes_updown(grid, next_boxes, dir):
         move_boxes_updown(grid, boxes, dir)
         return True
@@ -159,15 +157,12 @@ def push_boxes_part2(grid, box_loc, dir) -> bool:
 
     # step in [N,S].
     # First add the other box part:
-    box = {box_loc: grid[box_loc]}
-    if grid[box_loc] == "]":
-        box[box_loc + W] = "["
-    else:
-        box[box_loc + E] = "]"
+    box = {box_loc}
+    box.add(box_loc + W if grid[box_loc] == "]" else box_loc + E)
     return push_boxes_updown(grid, box, dir)
 
 
-grid, loc = move_robot(start_grid.copy(), start_loc, steps, push_boxes_part2)
+grid, loc = move_robot(start_grid, start_loc, moves, push_boxes_part2)
 
 ans2 = sum_coord(grid, "[")
 
@@ -175,5 +170,5 @@ ans2 = sum_coord(grid, "[")
 timer = time.time() - start_time
 print(f"{ans2=}, {timer=:.2f}s")
 
-print("Final grid:")
-print_grid(grid, loc)
+# print("Final grid:")
+# print_grid(grid, loc)
