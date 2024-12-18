@@ -18,7 +18,7 @@ start_time = time.time()
 ### PART 1 ###
 
 
-def run_program(registers, instructions):
+def run_program(registers, program):
     regs = list(registers)
 
     def combo(operand):
@@ -27,9 +27,9 @@ def run_program(registers, instructions):
 
     res = []
     pointer = 0
-    while pointer < len(instructions):
-        opcode = instructions[pointer]
-        operand = instructions[pointer + 1]
+    while pointer < len(program):
+        opcode = program[pointer]
+        operand = program[pointer + 1]
 
         match opcode:
             case 1:
@@ -121,8 +121,8 @@ for ix, val in enumerate(reversed(program)):
     new_candidates = []
     for A in candidates:
         A *= base
-        for new_bits in range(range_start, base):
-            v = A + new_bits
+        for new_digit in range(range_start, base):
+            v = A + new_digit
             if output(v) == val:
                 new_candidates.append(v)
     assert len(new_candidates)
