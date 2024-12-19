@@ -109,30 +109,37 @@ For the second last output, we need a 2-digit number, where we already know the 
 Again we can try every value for this digit, this time 0 is also allowed.
 
 Note in every step there can be multiple solutions, but not every solution might be feasible in the next steps.
-So we keep track of all options.
-We end up with several potential values for A and we take the minimum.
+In that case, we need to go back to the previous step and try the next one.
+Since we start with the most significant digit of A, the first solution produces the smallest answer.
 """
 
 base = 8
 
-candidates = [0]
-for ix, val in enumerate(reversed(program)):
-    range_start = ix == 0  # first iteration can not be 0
-    new_candidates = []
-    for A in candidates:
+
+def solutions(program):
+    val, *sub_program = program
+    if len(program) == 1:
+        range_start = 1
+        solutions_so_far = [0]
+    else:
+        range_start = 0
+        solutions_so_far = solutions(sub_program)
+
+    for A in solutions_so_far:
         A *= base
         for new_digit in range(range_start, base):
             v = A + new_digit
             if output(v) == val:
-                new_candidates.append(v)
-    assert len(new_candidates)
-    candidates = new_candidates
+                yield v
 
+
+ans2 = next(solutions(program))
+
+assert run_program2(ans2) == program
 # print(f"{candidates=}")
 # Check that all candidates create the same output:
-assert all(run_program2(c) == program for c in candidates)
-
-ans2 = min(candidates)
+# assert all(run_program2(c) == program for c in candidates)
+# ans2 = min(candidates)
 
 timer = time.time() - start_time
 print(f"{ans2=}, {timer=:.2f}s")
