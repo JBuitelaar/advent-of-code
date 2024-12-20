@@ -8,6 +8,6 @@ repos:
     # Run the formatter.
     - id: ruff-format
 - repo: https://github.com/LiquidFun/aoc_tiles
-  rev: 0.6.2
+  rev: 0.6.3
   hooks:
     - id: aoc-tiles

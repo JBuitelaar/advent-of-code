@@ -8,7 +8,9 @@ from functools import reduce, cache
 from dataclasses import dataclass
 from aocd.models import Puzzle
 from dotenv import load_dotenv
-sys.setrecursionlimit(10**6)
+from heapq import heappop, heappush
+from bisect import bisect
+# sys.setrecursionlimit(10**6)
 
 load_dotenv()
 
@@ -38,12 +40,14 @@ print(f"Example: \n{data}\n{"="*80}")
 # print(data[:300],"...")
 
 start_time = time.time()
+
 ### PART 1 ###
 ans1 = 0
 
 lines = data.strip().split("\n")
+# p1,p2 = data.strip().split("\n\n")
 # [line for line in lines]
-# ns = [list(map(int, re.findall("\\d+", line))) for line in lines]
+# ns = [list(map(int, re.findall(r"-?\d+", line))) for line in lines]
 for line in lines:
     vals = line.split()
 
