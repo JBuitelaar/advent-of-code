@@ -59,11 +59,30 @@ def solve(cheat_length):
     return res
 
 
-ans1 = solve(2)
+def solve2(cheat_length):
+    """same but faster
+    Instead of checking every combination, just check the points that are <= cheat_length away
+    """
+    distances = {loc: d for loc, d in path}
+    res = 0
+    for (x1, y1), d1 in path:
+        for x_offset in range(-cheat_length, cheat_length + 1):
+            max_y_offset = cheat_length - abs(x_offset)
+            for y_offset in range(-max_y_offset, max_y_offset + 1):
+                d2 = distances.get((x1 + x_offset, y1 + y_offset))
+                if (
+                    d2 is not None
+                    and d2 - d1 - abs(x_offset) - abs(y_offset) >= min_saving
+                ):
+                    res += 1
+    return res
+
+
+ans1 = solve2(2)
 timer = time.time() - start_time
 print(f"{ans1=}, {timer=:.2f}s")
 
-ans2 = solve(20)
+ans2 = solve2(20)
 timer = time.time() - start_time
 print(f"{ans2=}, {timer=:.2f}s")
 
@@ -108,6 +127,21 @@ de = {k: v for k, v in distance_to_end.items() if v <= max_length}
 def solve_maze(cheat_length):
     res = 0
     for (x1, y1), d1 in distance_from_start.items():
+        for x_offset in range(-cheat_length, cheat_length + 1):
+            max_y_offset = cheat_length - abs(x_offset)
+            for y_offset in range(-max_y_offset, max_y_offset + 1):
+                d2 = distance_to_end.get((x1 + x_offset, y1 + y_offset))
+                if (
+                    d2 is not None
+                    and d1 + d2 + abs(x_offset) + abs(y_offset) <= max_length
+                ):
+                    res += 1
+    return res
+
+
+def solve_maze2(cheat_length):
+    res = 0
+    for (x1, y1), d1 in distance_from_start.items():
         for (x2, y2), d2 in distance_to_end.items():
             if d1 + d2 <= max_length:
                 dist = abs(x1 - x2) + abs(y1 - y2)
@@ -116,5 +150,5 @@ def solve_maze(cheat_length):
     return res
 
 
-# assert solve_maze(2)==ans1
-# assert solve_maze(20)==ans2
+assert solve_maze(2) == ans1
+assert solve_maze(20) == ans2
