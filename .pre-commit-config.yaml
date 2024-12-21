@@ -11,3 +11,5 @@ repos:
   rev: 0.6.3
   hooks:
     - id: aoc-tiles
+      args:
+        - --auto-add-tiles-to-git=amend
