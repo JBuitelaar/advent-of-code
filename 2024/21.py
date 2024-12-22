@@ -2,6 +2,7 @@ import time
 from functools import cache
 from aocd.models import Puzzle
 from dotenv import load_dotenv
+from collections import defaultdict
 
 load_dotenv()
 
@@ -84,7 +85,6 @@ def steps_key(code, start="A"):
 def steps_dir_all(code, start="a"):
     ch = code[0]
     rest_code = code[1:]
-    # ch,*rest_code=code
     key_arrows = move_arrow(start, ch)
     if not rest_code:
         return key_arrows
@@ -103,16 +103,33 @@ def length(arrc):
     return sum((len(k) + 1) * v for k, v in arrc.items())
 
 
+mins = defaultdict(lambda: defaultdict(set))
+
+
 @cache
 def min_length(arrows, step):
+    # step 1 is the robot we're controlling
     if step == 0:
         return len(arrows)
-    subs = arrows[:-1].split("a")
+    if "a" in arrows[:-1]:
+        subs = arrows[:-1].split("a")
+        return sum(min_length(sub + "a", step) for sub in subs)
 
-    return sum(
-        min(min_length(opt, step - 1) for opt in options)
-        for options in (steps_dir_all(sub + "a") for sub in subs)
-    )
+    options = steps_dir_all(arrows)
+
+    if len(options) > 1:
+        lengths = [min_length(opt, step - 1) for opt in options]
+        # best=min((l,opt) for l,opt in zip(lengts,options))[1]
+        # mins[arrows][best].add(step)
+
+        sorted_lens = sorted((length, opt) for length, opt in zip(lengths, options))
+        min_v = sorted_lens[0][0]
+        for length, best in sorted_lens:
+            if length > min_v:
+                break
+            mins[arrows][best].add(step)
+
+    return min(min_length(opt, step - 1) for opt in options)
 
 
 lines = data.strip().split("\n")
@@ -124,19 +141,32 @@ def solve(dir_count):
         num = int(line[:-1])
         keys = steps_key(line)
         v = min(min_length(k, dir_count) for k in keys)
-        # print(line,v,num)
         ans1 += v * num
     return ans1
 
 
 start_time = time.time()
 
-ans1 = solve(2)
-
+# ans1 = solve(2)
 timer = time.time() - start_time
-print(f"{ans1=}, {timer=:.2f}s")
+# print(f"{ans1=}, {timer=:.2f}s")
 
 ans2 = solve(25)
 
 timer = time.time() - start_time
 print(f"{ans2=}, {timer=:.2f}s")
+
+
+print("Shortest sequency by iteration (1 is the one we control):")
+for k, v in mins.items():
+    if len(v) > 1:
+        row = f"{k}:"
+        for k2, v2 in v.items():
+            mx = max(v2)
+            mn = min(v2)
+            if mx - mn + 1 == len(v2):
+                r = f"({min(v2)}-{max(v2)})" if len(v2) > 1 else f"[{list(v2)[0]}]"
+            else:
+                r = str(sorted(list(v2)))
+            row += f"\n* {k2}: {r},"
+        print(row)
