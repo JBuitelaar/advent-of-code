@@ -20,7 +20,7 @@ data = puzzle.input_data
 
 def read_pad(pad_list):
     return {
-        str(val): r + c * 1j
+        str(val): (r, c)
         for r, row in enumerate(pad_list)
         for c, val in enumerate(row)
         if val != "."
@@ -33,6 +33,7 @@ def inverse(d):
 
 number_pad = [[7, 8, 9], [4, 5, 6], [1, 2, 3], [".", 0, "A"]]
 arrow_pad = [[".", "^", "a"], ["<", "v", ">"]]
+moves = (("^", "v"), ("<", ">"))
 
 number_locs = read_pad(number_pad)
 number_grid = inverse(number_locs)
@@ -40,24 +41,24 @@ number_grid = inverse(number_locs)
 arrow_locs = read_pad(arrow_pad)
 arrow_grid = inverse(arrow_locs)
 
-moves = {1: "v", -1: "^", 1j: ">", -1j: "<"}
+
+def moved(start, dir, move):
+    return tuple(x + move if i == dir else x for i, x in enumerate(start))
 
 
 def move_presses(start, target, grid):
     if start == target:
         return ["a"]
     res = []
-    if start.imag != target.imag:
-        move = 1j if target.imag > start.imag else -1j
-        if start + move in grid:
-            for sub in move_presses(start + move, target, grid):
-                res.append(moves[move] + sub)
+    for dir in (0, 1):
+        move = target[dir] - start[dir]
 
-    if start.real != target.real:
-        move = 1 if target.real > start.real else -1
-        if start + move in grid:
-            for sub in move_presses(start + move, target, grid):
-                res.append(moves[move] + sub)
+        if move != 0:
+            nxt = moved(start, dir, move)
+
+            if nxt in grid:
+                for sub in move_presses(nxt, target, grid):
+                    res.append(moves[dir][move > 0] * abs(move) + sub)
     return res
 
 
