@@ -40,7 +40,7 @@ def run72(program,seq):
             for vm in vms:
                 try:
                     val = vm.next_output(val)
-                except GeneratorExit:
+                except StopIteration:
                     return val
 
     return run_until_done(vms,val)

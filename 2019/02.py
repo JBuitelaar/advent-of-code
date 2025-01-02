@@ -2,10 +2,8 @@ from intcode import IntCode, read_program_for_puzzle
 
 def run2(program,inputs=None):
     vm = IntCode(program)
-    try:
-        vm.next_output(inputs)
-    except GeneratorExit:
-        return vm.memory[0]
+    vm.run()
+    return vm.memory[0]
 
 program2 = read_program_for_puzzle(2)
 

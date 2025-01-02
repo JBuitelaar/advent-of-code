@@ -3,7 +3,7 @@ from intcode import IntCode, read_program_for_puzzle, read_program_string
 # examples:
 program = read_program_string("109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99")
 vm = IntCode(program)
-assert vm.run_all() == program
+assert vm.run() == program
 res = IntCode(read_program_string("1102,34915192,34915192,7,4,7,99,0")).next_output()
 assert len(str(res))==16
 
