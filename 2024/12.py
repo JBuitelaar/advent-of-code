@@ -18,7 +18,7 @@ MIIIIIJJEE
 MIIISIJEEE
 MMMISSJEEE"""
 
-print(f"Example: \n{data}\n{"="*80}")
+print(f"Example: \n{data}\n{'=' * 80}")
 
 data = puzzle.input_data
 
